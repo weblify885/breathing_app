@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenFlow - Guided Breathing Exercises for Relaxation & Focus</title>
+    <meta name="description" content="Calm your mind and body with ZenFlow, a free online tool for guided breathing exercises. Choose from techniques like Box Breathing, 4-7-8, and more to reduce stress, improve focus, and find your inner peace.">
+    <meta name="keywords" content="breathing exercises, guided breathing, deep breathing, mindfulness, meditation, stress relief, anxiety relief, focus, relaxation, box breathing, 4-7-8 breathing">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tone.js for sound generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <!-- Custom Styles & Theme Configuration -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #animator {
+            transition-property: transform, opacity;
+            transition-timing-function: linear;
+        }
+        .custom-focus:focus-visible {
+            outline: 2px solid #60a5fa; /* blue-400 */
+            outline-offset: 2px;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; /* slate-100 */
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* slate-400 */
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+        /* Fade-in/out transitions for screens */
+        .screen {
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd', '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8', '800': '#1e40af', '900': '#1e3a8a'
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-500">
+
+    <!-- Main Application Wrapper -->
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
+
+        <!-- Header with Title and Theme Toggle -->
+        <header id="main-header" class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-primary-600 dark:text-primary-400">ZenFlow</h1>
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 custom-focus">
+                <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </button>
+        </header>
+
+        <!-- Main Screen (Controls) -->
+        <div id="main-screen" class="screen w-full flex flex-col items-center justify-center">
+            <main class="flex flex-col items-center justify-center w-full max-w-2xl text-center flex-grow">
+                <div class="w-full max-w-md space-y-6">
+                    <div>
+                        <label for="technique" class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Breathing Technique</label>
+                        <select id="technique" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 custom-focus">
+                            <option value="box">Box Breathing (4-4-4-4)</option>
+                            <option value="478">4-7-8 Breathing</option>
+                            <option value="mindful">Mindful Breathing (5-5)</option>
+                            <option value="pursed">Pursed Lip Breathing (4-6)</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div id="custom-timings" class="hidden grid grid-cols-3 gap-4 p-4 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
+                        <div>
+                            <label for="inhale-time" class="block text-xs font-medium text-center">Inhale</label>
+                            <input type="number" id="inhale-time" value="4" min="1" max="20" class="w-full mt-1 p-2 text-center rounded-md bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 custom-focus">
+                        </div>
+                        <div>
+                            <label for="hold-time" class="block text-xs font-medium text-center">Hold</label>
+                            <input type="number" id="hold-time" value="4" min="0" max="20" class="w-full mt-1 p-2 text-center rounded-md bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 custom-focus">
+                        </div>
+                        <div>
+                            <label for="exhale-time" class="block text-xs font-medium text-center">Exhale</label>
+                            <input type="number" id="exhale-time" value="4" min="1" max="20" class="w-full mt-1 p-2 text-center rounded-md bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 custom-focus">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="duration" class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Session Duration</label>
+                            <select id="duration" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 custom-focus">
+                                <option value="60">1 Minute</option>
+                                <option value="120">2 Minutes</option>
+                                <option value="300" selected>5 Minutes</option>
+                                <option value="600">10 Minutes</option>
+                                <option value="Infinity">Continuous</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sound" class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Sound Guide</label>
+                            <select id="sound" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 custom-focus">
+                                <option value="off">Off</option>
+                                <option value="chime">Chime</option>
+                                <option value="bowl">Singing Bowl</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="start-stop-btn" class="w-full py-4 px-6 text-lg font-semibold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-200 custom-focus">
+                        Start Session
+                    </button>
+                </div>
+            </main>
+            <footer class="w-full text-center p-4 mt-8">
+                <div class="flex justify-center items-center space-x-4 text-sm text-slate-500 dark:text-slate-400">
+                    <button data-modal="instructions-modal" class="modal-trigger hover:text-primary-500 custom-focus">How to Use</button>
+                    <span>&bull;</span>
+                    <button data-modal="about-modal" class="modal-trigger hover:text-primary-500 custom-focus">About</button>
+                    <span>&bull;</span>
+                    <button data-modal="privacy-modal" class="modal-trigger hover:text-primary-500 custom-focus">Privacy Policy</button>
+                </div>
+            </footer>
+        </div>
+        
+        <!-- Session Screen -->
+        <div id="session-screen" class="screen absolute inset-0 w-full h-full flex flex-col items-center justify-center opacity-0 pointer-events-none">
+            <div id="animator-container" class="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center mb-8">
+                <div id="animator" class="absolute w-full h-full bg-gradient-to-br from-primary-400 to-primary-600 dark:from-primary-500 dark:to-primary-700 rounded-full opacity-20"></div>
+                <div class="relative z-10 text-center">
+                    <p id="instruction-text" class="text-2xl sm:text-3xl font-semibold text-slate-700 dark:text-slate-100">Ready?</p>
+                    <p id="countdown-text" class="text-5xl sm:text-6xl font-bold text-primary-600 dark:text-primary-400 mt-2"></p>
+                </div>
+            </div>
+            <button id="stop-btn-session" class="mt-8 px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded-full text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-600 custom-focus">Stop</button>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden"><div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"><div class="p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800"><h3 class="text-xl font-semibold">Breathing Techniques</h3><button class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 modal-close">&times;</button></div><div class="p-6 space-y-4"><p>Deep breathing is a powerful tool to manage stress and improve focus. Here's a guide to the techniques available in ZenFlow:</p><div class="prose dark:prose-invert max-w-none"><h4>Box Breathing (4-4-4-4)</h4><p>A simple and effective technique to calm the nervous system. Used by Navy SEALs to stay calm under pressure.</p><ul><li>Inhale for 4 seconds.</li><li>Hold your breath for 4 seconds.</li><li>Exhale for 4 seconds.</li><li>Hold your breath for 4 seconds.</li></ul><h4>4-7-8 Breathing</h4><p>Known as the "relaxing breath," this technique developed by Dr. Andrew Weil can help with sleep and anxiety.</p><ul><li>Inhale through your nose for 4 seconds.</li><li>Hold your breath for 7 seconds.</li><li>Exhale completely through your mouth for 8 seconds.</li></ul><h4>Mindful Breathing (5-5)</h4><p>A basic technique to anchor yourself in the present moment by focusing on a balanced breath.</p><ul><li>Inhale slowly for 5 seconds.</li><li>Exhale slowly for 5 seconds.</li></ul><h4>Pursed Lip Breathing (4-6)</h4><p>This technique helps slow your breathing rate and makes each breath more effective by keeping your airways open longer.</p><ul><li>Inhale through your nose for 4 seconds.</li><li>Exhale slowly through pursed lips (like you're blowing on hot soup) for 6 seconds.</li></ul></div></div></div></div>
+    <div id="about-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden"><div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-2xl"><div class="p-6 border-b border-slate-200 dark:border-slate-700"><h3 class="text-xl font-semibold">About ZenFlow</h3><button class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 modal-close">&times;</button></div><div class="p-6 space-y-4"><p>ZenFlow is a simple, beautiful, and free tool designed to help you find calm and focus through the power of guided breathing. In our fast-paced world, taking a few moments to center yourself can make a world of difference.</p><p>Our mission is to provide an accessible, ad-supported mindfulness resource for everyone. We believe that mental well-being tools should be available to all, without a subscription fee. This app is designed to be a peaceful digital sanctuary. We hope it helps you on your journey to a more mindful life.</p><p>Contact: For support or inquiries, please reach out to contact@example.com (replace with a real email for a live site).</p></div></div></div>
+    <div id="privacy-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden"><div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"><div class="p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800"><h3 class="text-xl font-semibold">Privacy Policy</h3><button class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 modal-close">&times;</button></div><div class="p-6 space-y-4 text-sm"><p><strong>Last Updated: 2024-07-23</strong></p><p>Your privacy is important to us. ZenFlow is a client-side application, which means all functionality runs directly in your web browser. We do not collect, store, or transmit any personal data or usage information from your session.</p><p><strong>Data We Collect (Locally):</strong></p><ul class="list-disc list-inside space-y-1"><li>To provide features like the daily streak, we use your browser's `localStorage` to store the date of your last completed session and your current streak count. This data is stored only on your device and is never transmitted to our servers.</li></ul><p><strong>Third-Party Services (for Ad-Supported Version):</strong></p><p>To keep ZenFlow free, we may display advertisements from third-party networks like Google AdSense. These networks may use cookies and web beacons to collect non-personal information about your visits to this and other websites in order to provide advertisements about goods and services of interest to you. This information does not include your name, address, email address, or telephone number.</p><p>For more information about Google's policies, please visit the <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:underline">Google Ad & Content Network privacy policy</a>.</p><p>By using ZenFlow, you consent to our privacy policy.</p></div></div></div>
+    
+    <!-- Congratulations Modal -->
+    <div id="congrats-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md text-center p-8">
+            <h3 class="text-2xl font-bold text-primary-600 dark:text-primary-400">Well Done!</h3>
+            <p class="mt-2 text-slate-600 dark:text-slate-300" id="session-summary-text">You've completed your session.</p>
+            <div class="mt-6 bg-slate-100 dark:bg-slate-700/50 p-4 rounded-lg">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">DAILY STREAK</p>
+                <p class="text-4xl font-bold text-amber-500" id="streak-count">🔥 1</p>
+            </div>
+            <button id="close-congrats-modal" class="mt-6 w-full py-3 px-6 text-lg font-semibold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 rounded-lg custom-focus">
+                Continue
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const mainScreen = document.getElementById('main-screen');
+            const sessionScreen = document.getElementById('session-screen');
+            const animator = document.getElementById('animator');
+            const instructionText = document.getElementById('instruction-text');
+            const countdownText = document.getElementById('countdown-text');
+            const startStopBtn = document.getElementById('start-stop-btn');
+            const stopBtnSession = document.getElementById('stop-btn-session');
+            const techniqueSelect = document.getElementById('technique');
+            const durationSelect = document.getElementById('duration');
+            const soundSelect = document.getElementById('sound');
+            const customTimingsDiv = document.getElementById('custom-timings');
+            const inhaleInput = document.getElementById('inhale-time');
+            const holdInput = document.getElementById('hold-time');
+            const exhaleInput = document.getElementById('exhale-time');
+            const themeToggle = document.getElementById('theme-toggle');
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+            const congratsModal = document.getElementById('congrats-modal');
+            const closeCongratsModalBtn = document.getElementById('close-congrats-modal');
+            const sessionSummaryText = document.getElementById('session-summary-text');
+            const streakCountText = document.getElementById('streak-count');
+
+            // --- State Variables ---
+            let isRunning = false;
+            let sessionInterval, animationInterval;
+            let totalTime, timeRemaining, currentPhaseIndex, phaseCountdown;
+            let lastSessionInfo = {};
+            
+            // --- Breathing Pattern Definitions ---
+            const breathingPatterns = {
+                box: { name: 'Box Breathing', phases: [{ name: 'Inhale', duration: 4 }, { name: 'Hold', duration: 4 }, { name: 'Exhale', duration: 4 }, { name: 'Hold', duration: 4 }] },
+                478: { name: '4-7-8 Breathing', phases: [{ name: 'Inhale', duration: 4 }, { name: 'Hold', duration: 7 }, { name: 'Exhale', duration: 8 }] },
+                mindful: { name: 'Mindful Breathing', phases: [{ name: 'Inhale', duration: 5 }, { name: 'Exhale', duration: 5 }] },
+                pursed: { name: 'Pursed Lip Breathing', phases: [{ name: 'Inhale', duration: 4 }, { name: 'Exhale', duration: 6 }] },
+                custom: { name: 'Custom', phases: [] }
+            };
+
+            // --- Sound Synthesis ---
+            let synth;
+            const soundOptions = {
+                chime: () => new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.1, release: 1 } }).toDestination(),
+                bowl: () => new Tone.MetalSynth({ frequency: 200, envelope: { attack: 0.01, decay: 1.4, release: 0.2 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination()
+            };
+
+            const playSound = () => {
+                if (soundSelect.value !== 'off' && Tone.context.state !== 'running') {
+                    Tone.start().catch(e => console.error("Tone.js could not start:", e));
+                }
+                if (soundSelect.value !== 'off' && synth) {
+                    if (soundSelect.value === 'chime') synth.triggerAttackRelease('C5', '8n');
+                    if (soundSelect.value === 'bowl') synth.triggerAttackRelease('C4', '1n');
+                }
+            };
+
+            // --- Screen Management ---
+            const showScreen = (screenToShow) => {
+                const screens = [mainScreen, sessionScreen];
+                screens.forEach(screen => {
+                    if (screen.id === screenToShow) {
+                        screen.classList.remove('opacity-0', 'pointer-events-none');
+                    } else {
+                        screen.classList.add('opacity-0', 'pointer-events-none');
+                    }
+                });
+            };
+
+            // --- Core Functions ---
+            const updateAnimator = (phaseName, duration) => {
+                animator.style.transitionDuration = `${duration}s`;
+                if (phaseName.toLowerCase().includes('inhale')) {
+                    animator.style.transform = 'scale(1)';
+                    animator.style.opacity = '0.7';
+                } else if (phaseName.toLowerCase().includes('exhale')) {
+                    animator.style.transform = 'scale(0.3)';
+                    animator.style.opacity = '0.2';
+                }
+            };
+
+            const nextPhase = () => {
+                if (!isRunning) return;
+                const pattern = getSelectedPattern();
+                currentPhaseIndex = (currentPhaseIndex + 1) % pattern.phases.length;
+                const currentPhase = pattern.phases[currentPhaseIndex];
+                
+                instructionText.textContent = currentPhase.name;
+                phaseCountdown = currentPhase.duration;
+                updateAnimator(currentPhase.name, currentPhase.duration);
+                playSound();
+                countdownText.textContent = phaseCountdown;
+                
+                if (animationInterval) clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (!isRunning) { clearInterval(animationInterval); return; }
+                    phaseCountdown--;
+                    countdownText.textContent = phaseCountdown > 0 ? phaseCountdown : '';
+                    if (phaseCountdown <= 0) {
+                        clearInterval(animationInterval);
+                        nextPhase();
+                    }
+                }, 1000);
+            };
+
+            const startSession = () => {
+                isRunning = true;
+                showScreen('session-screen');
+
+                const pattern = getSelectedPattern();
+                const durationText = durationSelect.options[durationSelect.selectedIndex].text;
+                lastSessionInfo = {
+                    technique: pattern.name,
+                    duration: durationText
+                };
+
+                totalTime = durationSelect.value === 'Infinity' ? Infinity : parseInt(durationSelect.value);
+                timeRemaining = totalTime;
+                currentPhaseIndex = -1;
+                
+                if (soundSelect.value !== 'off') {
+                    synth = soundOptions[soundSelect.value]();
+                }
+
+                nextPhase();
+
+                if (totalTime !== Infinity) {
+                    if(sessionInterval) clearInterval(sessionInterval);
+                    sessionInterval = setInterval(() => {
+                        if (!isRunning) { clearInterval(sessionInterval); return; }
+                        timeRemaining--;
+                        if (timeRemaining < 0) {
+                            stopSession(true); // true indicates completion
+                        }
+                    }, 1000);
+                }
+            };
+
+            const stopSession = (completed = false) => {
+                isRunning = false;
+                clearInterval(sessionInterval);
+                clearInterval(animationInterval);
+                sessionInterval = null;
+                animationInterval = null;
+                
+                showScreen('main-screen');
+                
+                animator.style.transitionDuration = '2s';
+                animator.style.transform = 'scale(0.3)';
+                animator.style.opacity = '0.2';
+
+                if (completed) {
+                    handleSessionCompletion();
+                }
+            };
+
+            const handleSessionCompletion = () => {
+                const streak = calculateStreak();
+                sessionSummaryText.textContent = `You completed ${lastSessionInfo.duration} of ${lastSessionInfo.technique}.`;
+                streakCountText.innerHTML = `🔥 ${streak}`;
+                congratsModal.classList.remove('hidden');
+            };
+
+            // --- Streak Calculation ---
+            const calculateStreak = () => {
+                const today = new Date().toDateString();
+                const streakData = JSON.parse(localStorage.getItem('zenFlowStreak')) || { count: 0, date: null };
+                
+                if (streakData.date === today) {
+                    return streakData.count; // Already completed today
+                }
+
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                if (streakData.date === yesterday.toDateString()) {
+                    streakData.count++;
+                } else {
+                    streakData.count = 1; // Reset streak
+                }
+
+                streakData.date = today;
+                localStorage.setItem('zenFlowStreak', JSON.stringify(streakData));
+                return streakData.count;
+            };
+
+            const getSelectedPattern = () => {
+                const selected = techniqueSelect.value;
+                if (selected === 'custom') {
+                    const inhale = parseInt(inhaleInput.value) || 4;
+                    const hold = parseInt(holdInput.value) || 0;
+                    const exhale = parseInt(exhaleInput.value) || 4;
+                    let phases = [{ name: 'Inhale', duration: inhale }];
+                    if (hold > 0) { phases.push({ name: 'Hold', duration: hold }); }
+                    phases.push({ name: 'Exhale', duration: exhale });
+                    return { name: 'Custom Breathing', phases };
+                }
+                return breathingPatterns[selected];
+            };
+
+            // --- Event Listeners ---
+            startStopBtn.addEventListener('click', startSession);
+            stopBtnSession.addEventListener('click', () => stopSession(false));
+
+            techniqueSelect.addEventListener('change', () => {
+                customTimingsDiv.classList.toggle('hidden', techniqueSelect.value !== 'custom');
+            });
+
+            // --- Theme Management ---
+            const applyTheme = (isDark) => {
+                document.documentElement.classList.toggle('dark', isDark);
+                sunIcon.classList.toggle('hidden', isDark);
+                moonIcon.classList.toggle('hidden', !isDark);
+            };
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                applyTheme(isDark);
+            });
+
+            // --- Modal Management ---
+            document.querySelectorAll('.modal-trigger').forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    const modalId = trigger.getAttribute('data-modal');
+                    document.getElementById(modalId).classList.remove('hidden');
+                });
+            });
+            document.querySelectorAll('.modal-close, .fixed[id$="-modal"]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target === el) {
+                        el.closest('.fixed').classList.add('hidden');
+                    }
+                });
+            });
+            closeCongratsModalBtn.addEventListener('click', () => {
+                congratsModal.classList.add('hidden');
+            });
+
+            // --- Initial Setup ---
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+            
+            animator.style.transitionDuration = '2s';
+            animator.style.transform = 'scale(0.3)';
+        });
+    </script>
+
+</body>
+</html>
